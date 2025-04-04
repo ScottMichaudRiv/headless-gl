@@ -1,3 +1,4 @@
+/* eslint-disable */
 const bits = require('bit-twiddle')
 const { WebGLContextAttributes } = require('./webgl-context-attributes')
 const { WebGLRenderingContext, wrapContext } = require('./webgl-rendering-context')
@@ -17,7 +18,8 @@ function createContext (width, height, options) {
   width = width | 0
   height = height | 0
   if (!(width > 0 && height > 0)) {
-    return null
+    console.log('Failing out of createContext zero width or height. Returning null A.', width, height);
+    return null;
   }
 
   const contextAttributes = new WebGLContextAttributes(
@@ -36,6 +38,7 @@ function createContext (width, height, options) {
 
   let ctx
   try {
+    console.log('Starting get context.');
     ctx = new WebGLRenderingContext(
       1,
       1,
@@ -46,9 +49,14 @@ function createContext (width, height, options) {
       contextAttributes.premultipliedAlpha,
       contextAttributes.preserveDrawingBuffer,
       contextAttributes.preferLowPowerToHighPerformance,
-      contextAttributes.failIfMajorPerformanceCaveat)
-  } catch (e) {}
+      contextAttributes.failIfMajorPerformanceCaveat);
+    console.log('Context received... carrying on');
+  } catch (e) {
+    console.log('Error getting rendering context!');
+    console.error(e);
+  }
   if (!ctx) {
+    console.log('Returning null B');
     return null
   }
 
@@ -66,6 +74,8 @@ function createContext (width, height, options) {
   ctx._textures = {}
   ctx._framebuffers = {}
   ctx._renderbuffers = {}
+
+  console.log('1111');
 
   ctx._activeProgram = null
   ctx._activeFramebuffer = null
@@ -101,6 +111,8 @@ function createContext (width, height, options) {
   ctx._unpackAlignment = 4
   ctx._packAlignment = 4
 
+  console.log('1112');
+
   // Allocate framebuffer
   ctx._allocateDrawingBuffer(width, height)
 
@@ -122,6 +134,8 @@ function createContext (width, height, options) {
   ctx.clearColor(0, 0, 0, 0)
   ctx.clearStencil(0)
   ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT | ctx.STENCIL_BUFFER_BIT)
+
+  console.log('1114');
 
   return wrapContext(ctx)
 }

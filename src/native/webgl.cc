@@ -167,32 +167,47 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
                                              bool failIfMajorPerformanceCaveat)
     : state(GLCONTEXT_STATE_INIT), unpack_flip_y(false), unpack_premultiply_alpha(false),
       unpack_colorspace_conversion(0x9244), unpack_alignment(4), next(NULL), prev(NULL) {
+      std::cout << "Constructing native context\n";
   if (!eglGetProcAddress) {
+  	std::cout << "3111\n";
     if (!eglLibrary.open("libEGL")) {
+      std::cout << "3112\n";
       errorMessage = "Error opening ANGLE shared library.";
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
 
+		std::cout << "3113\n";
     auto getProcAddress = eglLibrary.getFunction<PFNEGLGETPROCADDRESSPROC>("eglGetProcAddress");
+    std::cout << "3114\n";
     ::LoadEGL(getProcAddress);
+    std::cout << "3115\n";
   }
+
+	std::cout << "3116\n";
 
   // Get display
   if (!HAS_DISPLAY) {
+  	std::cout << "3117\n";
     DISPLAY = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (DISPLAY == EGL_NO_DISPLAY) {
+    	std::cout << "3118\n";
       errorMessage = "Error retrieving EGL default display.";
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
 
+		std::cout << "3119\n";
+
     // Initialize EGL
     if (!eglInitialize(DISPLAY, NULL, NULL)) {
+    	std::cout << "3120\n";
       errorMessage = "Error initializing EGL.";
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
+
+		std::cout << "3121\n";
 
     // Save display
     HAS_DISPLAY = true;
@@ -217,7 +232,10 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
                           EGL_OPENGL_ES2_BIT,
                           EGL_NONE};
   EGLint num_config;
+
+  std::cout << "3122\n";
   if (!eglChooseConfig(DISPLAY, attrib_list, &config, 1, &num_config) || num_config != 1) {
+  	std::cout << "3123\n";
     errorMessage = "Error choosing EGL config.";
     state = GLCONTEXT_STATE_ERROR;
     return;
@@ -233,33 +251,51 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
                              EGL_ROBUST_RESOURCE_INITIALIZATION_ANGLE,
                              EGL_TRUE,
                              EGL_NONE};
+
+  std::cout << "3124\n";
   context = eglCreateContext(DISPLAY, config, EGL_NO_CONTEXT, contextAttribs);
+  std::cout << "3125\n";
   if (context == EGL_NO_CONTEXT) {
+  	std::cout << "3126\n";
     state = GLCONTEXT_STATE_ERROR;
     return;
   }
 
+  std::cout << "3127\n";
+
   EGLint surfaceAttribs[] = {EGL_WIDTH, (EGLint)width, EGL_HEIGHT, (EGLint)height, EGL_NONE};
   surface = eglCreatePbufferSurface(DISPLAY, config, surfaceAttribs);
+
+  std::cout << "3128\n";
   if (surface == EGL_NO_SURFACE) {
+  	std::cout << "3129\n";
     errorMessage = "Error creating EGL surface.";
     state = GLCONTEXT_STATE_ERROR;
     return;
   }
 
+  std::cout << "3129\n";
+
   // Set active
   if (!eglMakeCurrent(DISPLAY, surface, surface, context)) {
+  	std::cout << "3130\n";
     errorMessage = "Error making context current.";
     state = GLCONTEXT_STATE_ERROR;
     return;
   }
+
+	std::cout << "3131\n";
 
   // Success
   state = GLCONTEXT_STATE_OK;
   registerContext();
   ACTIVE = this;
 
+  std::cout << "3132\n";
+
   LoadGLES(eglGetProcAddress);
+
+  std::cout << "3133\n";
 
   // Enable the debug callback to debug GL errors.
   // EnableDebugCallback(nullptr);
@@ -274,12 +310,18 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
   const char *extensionsString = (const char *)(glGetString(GL_EXTENSIONS));
   enabledExtensions = GetStringSetFromCString(extensionsString);
 
+  std::cout << "3134\n";
+
   const char *requestableExtensionsString =
       (const char *)glGetString(GL_REQUESTABLE_EXTENSIONS_ANGLE);
   requestableExtensions = GetStringSetFromCString(requestableExtensionsString);
 
+  std::cout << "3135\n";
+
   // Request necessary WebGL extensions.
   glRequestExtensionANGLE("GL_EXT_texture_storage");
+
+  std::cout << "3136\n";
 
   // Select best preferred depth
   preferredDepth = GL_DEPTH_COMPONENT16;
@@ -288,6 +330,8 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
   } else if (strstr(extensionsString, "GL_OES_depth24")) {
     preferredDepth = GL_DEPTH_COMPONENT24_OES;
   }
+
+  std::cout << "3137\n";
 
   // Each WebGL extension maps to one or more required ANGLE extensions.
   // Note: WebGL extension names are lowercase.
@@ -306,6 +350,8 @@ WebGLRenderingContext::WebGLRenderingContext(int width, int height, bool alpha, 
       {"webgl_draw_buffers", {"GL_EXT_draw_buffers"}},
       {"oes_vertex_array_object", {"GL_OES_vertex_array_object"}},
       {"ext_shader_texture_lod", {"GL_EXT_shader_texture_lod"}}};
+
+		std::cout << "3138\n";
 }
 
 bool WebGLRenderingContext::setActive() {
@@ -407,6 +453,7 @@ GL_METHOD(DisposeAll) {
 }
 
 GL_METHOD(New) {
+	std::cout << "NEW ENTERED\n";
   Nan::HandleScope();
 
   WebGLRenderingContext *instance =
@@ -421,7 +468,10 @@ GL_METHOD(New) {
                                 (Nan::To<bool>(info[8]).ToChecked()),  // low power
                                 (Nan::To<bool>(info[9]).ToChecked())); // fail if crap
 
+	std::cout << "Context created!\n";
+
   if (instance->state != GLCONTEXT_STATE_OK) {
+  	std::cout << "Failed to create GLCONTEXT_STATE\n";
     if (!instance->errorMessage.empty()) {
       std::string error = std::string("Error creating WebGLContext: ") + instance->errorMessage;
       return Nan::ThrowError(error.c_str());
@@ -430,7 +480,11 @@ GL_METHOD(New) {
     }
   }
 
+  std::cout << "Passed Created\n";
+
   instance->Wrap(info.This());
+
+  std::cout << "Wrapped\n";
 
   info.GetReturnValue().Set(info.This());
 }

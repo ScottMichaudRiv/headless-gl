@@ -1,3 +1,4 @@
+/* eslint-disable */
 const HEADLESS_VERSION = require('../../package.json').version
 const { gl, NativeWebGLRenderingContext, NativeWebGL } = require('./native-gl')
 const { getANGLEInstancedArrays } = require('./extensions/angle-instanced-arrays')
@@ -71,11 +72,17 @@ const privateMethods = [
 ]
 
 function wrapContext (ctx) {
+  console.log('Wrap contexst entered', ctx);
+
   const wrapper = new WebGLRenderingContext()
+
+  console.log('2111');
   bindPublics(Object.keys(ctx), wrapper, ctx, privateMethods)
   bindPublics(Object.keys(ctx.constructor.prototype), wrapper, ctx, privateMethods)
   bindPublics(Object.getOwnPropertyNames(ctx), wrapper, ctx, privateMethods)
   bindPublics(Object.getOwnPropertyNames(ctx.constructor.prototype), wrapper, ctx, privateMethods)
+
+  console.log('2112');
 
   Object.defineProperties(wrapper, {
     drawingBufferWidth: {
@@ -87,6 +94,8 @@ function wrapContext (ctx) {
       set (value) { ctx.drawingBufferHeight = value }
     }
   })
+
+  console.log('2113');
 
   return wrapper
 }
